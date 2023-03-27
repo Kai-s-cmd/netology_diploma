@@ -1,6 +1,7 @@
 import vk_api
 from vk_api.exceptions import ApiError
 import itertools
+import datetime
 
 # Variables
 
@@ -16,11 +17,26 @@ class Search:
             response = self.vk_api.method('users.get',
                                           {'user_id': user_id,
                                            'fields': 'city, sex, bdate'})
-            print(response)
+
         except ApiError:
             return
 
-        return response
+        try:
+            # Дата рождения пользователя
+            birth_date = response[0]['bdate']
+            birth_year = birth_date.split('.')[2]
+            today = datetime.date.today()
+            current_year = today.year
+            age_of_user = current_year - int(birth_year)
+
+            # ID города
+            city_id = response[0]['city']['id']
+            # Пол пользователя
+            sex_of_user = response[0]['sex']
+        except KeyError:
+            return
+
+        return [age_of_user, city_id, sex_of_user]
 
     def search_users(self, city_id, age_from, age_to, sex, offset=None):
         """Функция ищет пользователей похожих на

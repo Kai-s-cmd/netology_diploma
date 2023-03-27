@@ -1,25 +1,25 @@
+import random
 from random import randrange
-from token_vk import bot_token
+from token_vk import bot_token, personal_token
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-import requests
-# from Search import VkBot
+from search_users import Search
+from vk_api.exceptions import ApiError
 
-# Variable
+search_info = Search(personal_token)
 
 
 class VkBot:
-    """VK бот спрашивающий информацию о пользователе,
+    """VK бот получающий информацию о пользователе,
        для дальнейшего поиска пары."""
     def __init__(self, user_id):
         self._USER_ID = user_id
         self._USERNAME = self._get_user_name_from_vk_id(user_id)
-        self._COMMANDS = ['ПРИВЕТ', "ЗАПОЛНИТЬ АНКЕТУ", 'ПОКА']
+        self._COMMANDS = ['ПРИВЕТ', "ДАЛЕЕ", 'ПОКА']
 
     def _get_user_name_from_vk_id(self, user_id):
         """Функция получает имя пользователя"""
         response = vk.method('users.get', {'user_id': user_id})
-        print(response)
         return response[0]["first_name"] + ' ' + response[0]["last_name"]
 
     def write_msg(self, user_id, message):
@@ -30,7 +30,15 @@ class VkBot:
         if message.upper() == self._COMMANDS[0]:
             return f'Привет, {self._USERNAME}!'
         elif message.upper() == self._COMMANDS[1]:
-            return f'Заполните анкету, {self._USERNAME}.'
+            try:
+                return search_info.search_users\
+                    (search_info.get_info_about_contacted_user_from_vk_id(self._USER_ID)[1],
+                    search_info.get_info_about_contacted_user_from_vk_id(self._USER_ID)[0] - 5,
+                    search_info.get_info_about_contacted_user_from_vk_id(self._USER_ID)[0] + 5,
+                    search_info.get_info_about_contacted_user_from_vk_id(self._USER_ID)[2]
+                    )
+            except TypeError:
+                return
         elif message.upper() == self._COMMANDS[2]:
             return f'До скорой встречи, {self._USERNAME}!'
         else:
@@ -50,25 +58,3 @@ if __name__ == '__main__':
                 print(f'New message from {event.user_id}', end='\n')
                 bot = VkBot(event.user_id)
                 bot.write_msg(event.user_id, bot.new_message(event.text))
-    #
-    # @staticmethod
-    # def _clean_all_tag_from_str(string_line):
-    #     """
-    #     Очистка строки stringLine от тэгов и их содержимых
-    #     :param string_line: Очищаемая строка
-    #     :return: очищенная строка
-    #     """
-    #
-    #     result = ""
-    #     not_skip = True
-    #     for i in list(string_line):
-    #         if not_skip:
-    #             if i == "<":
-    #                 not_skip = False
-    #             else:
-    #                 result += i
-    #         else:
-    #             if i == ">":
-    #                 not_skip = True
-    #
-    #     return result
