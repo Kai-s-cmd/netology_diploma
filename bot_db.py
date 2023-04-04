@@ -24,8 +24,7 @@ class VkDB:
 
         @staticmethod
         def add_client(contacted_id, viewed_id, name, conn=conn):
-            """Функция проверяет есть ли пользователь в ДБ,
-            если нет, добавляет его."""
+            """Функция добавляет просмотренного пользователя в ДБ."""
 
             with conn.cursor() as cur:
                 cur.execute('''
