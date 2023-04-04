@@ -5,7 +5,8 @@ import datetime
 
 
 class Search:
-    """Bot getting info about user in VK"""
+    """Ищет в вк пользователей по параметрам"""
+    # Доступ а айпи вк через токен
     def __init__(self, token):
         self.vk_api = vk_api.VkApi(token=token)
 
@@ -64,6 +65,7 @@ class Search:
         return result
 
     def photos_get(self, user_id):
+        """Метод возвращает топ 3 фото по лайкам"""
         response = self.vk_api.method('photos.get', {'album_id': 'profile',
                                                      'owner_id': user_id,
                                                      'extended': 1})

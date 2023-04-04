@@ -22,12 +22,15 @@ class VkBot:
         self._AGE_TO = self._BIRTH_YEAR + 5
         self._SEX = self.search.get_info_about_contacted_user_from_vk_id(self._USER_ID)[1]
 
-    def _get_user_name_from_vk_id(self, user_id):
-        """Функция получает имя пользователя"""
+    @staticmethod
+    def _get_user_name_from_vk_id(user_id):
+        """Метод получает имя пользователя"""
         response = vk.method('users.get', {'user_id': user_id})
         return response[0]["first_name"] + ' ' + response[0]["last_name"]
 
-    def write_msg(self, user_id, message, attachment=None):
+    @staticmethod
+    def write_msg(user_id, message, attachment=None):
+        """Метод пишет сообщения пользователю"""
         try:
             vk.method('messages.send', {'user_id': user_id,
                                         'message': message,
@@ -38,17 +41,25 @@ class VkBot:
             return
 
     def new_message(self, message):
+        """Метод отвечает на команды пользователя """
         if message.upper() == self._COMMANDS[0]:
-            return f'Привет, {self._USERNAME}!'
+            # Команда привет и помощь
+            return f'Привет, {self._USERNAME}!\n' \
+                   f'напишите "помощь" для просмотра команд'
         elif message.upper() == self._COMMANDS[1]:
+            # Команда далее присылающая следующую анкету
             if self._CITY_ID is None:
-                self.write_msg(event.user_id, 'Город не указан.\n'
-                    'Вы видите эту надпись потому что в вашем профиле не указан город.\n'
+                self.write_msg(
+                    event.user_id,
+                    'Город не указан.\n'
+                    'Вы видите эту надпись,'
+                    ' потому что в вашем профиле не указан город.\n'
                     'Напишите город для поиска, в формате "Город Москва":')
             if self._BIRTH_YEAR is None:
-                self.write_msg(event.user_id,
-                               'Не хватает информации о вашей дате рождения. '
-                               'Укажите ваш год рождения, в формате "год 1990"')
+                self.write_msg(
+                    event.user_id,
+                    'Не хватает информации о вашей дате рождения. '
+                    'Укажите ваш год рождения, в формате "год 1990"')
 
             try:
                 # Создает стол в дб
@@ -63,15 +74,15 @@ class VkBot:
                                                      self._AGE_FROM,
                                                      self._AGE_TO,
                                                      self._SEX,
-                                                     31):
-                    print(user)
+                                                     2):
                     name = user['name']
                     id = user['id']
                     # Проверка не просмотрен ли уже пользователь
-                    if self.database.find_client(self._USER_ID, sort_id=id):
+                    if self.database.find_client(self._USER_ID, viewed_id=id):
                         continue
                     else:
-                        # Добавляет в имя и айди, а также айди контактирующего в дб
+                        # Добавляет в имя и айди,
+                        # а также айди контактирующего в дб
                         self.database.add_client(self._USER_ID, id, name)
                         self.write_msg(event.user_id, f'https://vk.com/id{id}')
                         self.write_msg(event.user_id, name)
@@ -84,8 +95,10 @@ class VkBot:
                 return
 
         elif message.upper() == self._COMMANDS[2]:
+            # Команда пока
             return f'До скорой встречи, {self._USERNAME}!'
         elif message.upper() == self._COMMANDS[-1]:
+            # Команда помощь со всеми командами бота
             return f'Команды бота:\n' \
                    f'далее - посмотреть следующую анкету\n' \
                    f'помощь - выдает список команд.\n' \
@@ -93,9 +106,11 @@ class VkBot:
                    f'чтобы указать город вручную введите "Город Москва"\n' \
                    f'чтобы указать год вручную введите "год 1990"'
         elif 'город'.upper() in message.upper():
+            # Команда на установку города в ручную
             city_info = message.upper().split(' ')
             self._CITY_ID = city_info[1]
         elif 'год'.upper() in message.upper():
+            # Команда на установку года рождения в ручную
             year_info = message.upper().split(' ')
             self._BIRTH_YEAR = year_info[1]
         else:
@@ -105,13 +120,15 @@ class VkBot:
 if __name__ == '__main__':
     vk = vk_api.VkApi(token=bot_token)
     longpoll = VkLongPoll(vk)
-
-    for event in longpoll.listen():
-        # Если пришло новое сообщение
-        if event.type == VkEventType.MESSAGE_NEW:
-            # Если оно имеет метку для бота
-            if event.to_me:
-                # Сообщение от пользователя
-                print(f'New message from {event.user_id}', end='\n')
-                bot = VkBot(event.user_id)
-                bot.write_msg(event.user_id, bot.new_message(event.text))
+    try:
+        for event in longpoll.listen():
+            # Если пришло новое сообщение
+            if event.type == VkEventType.MESSAGE_NEW:
+                # Если оно имеет метку для бота
+                if event.to_me:
+                    # Сообщение от пользователя
+                    print(f'New message from {event.user_id}', end='\n')
+                    bot = VkBot(event.user_id)
+                    bot.write_msg(event.user_id, bot.new_message(event.text))
+    except ConnectionError:
+        print('Ошибка ВК')

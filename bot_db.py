@@ -9,7 +9,7 @@ class VkDB:
 
         @staticmethod
         def create_db(conn=conn):
-            """Функция создает стол sorted_users в ДБ sorted_users"""
+            """Метод создает стол sorted_users в ДБ sorted_users"""
 
             with conn.cursor() as cur:
                 cur.execute('''
@@ -24,7 +24,7 @@ class VkDB:
 
         @staticmethod
         def add_client(contacted_id, viewed_id, name, conn=conn):
-            """Функция добавляет просмотренного пользователя в ДБ."""
+            """Метод добавляет просмотренного пользователя в ДБ."""
 
             with conn.cursor() as cur:
                 cur.execute('''
@@ -37,13 +37,13 @@ class VkDB:
                 return 'Пользователь добавлен в базу!'
 
         @staticmethod
-        def find_client(contacted_id, sort_id, conn=conn):
-            """Функция ищет клиента в ДБ sorted_users."""
+        def find_client(contacted_id, viewed_id, conn=conn):
+            """Метод ищет клиента в ДБ sorted_users."""
 
             with conn.cursor() as cur:
                 cur.execute(f"""
                     SELECT contacted_id, viewed_id FROM sorted_users
-                    WHERE contacted_id = {contacted_id};
+                    WHERE contacted_id = {contacted_id} and viewed_id = {viewed_id};
                 """
                             )
                 conn.commit()
